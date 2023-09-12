@@ -46,6 +46,8 @@ def eval(args):
     out_folder = os.path.join(args.rootdir, "out", args.expname, new_nowtime)
     print("outputs will be saved to {}".format(out_folder))
     os.makedirs(out_folder, exist_ok=True)
+    args.new_nowtime = new_nowtime
+    args.out_folder = out_folder
 
     # save the args and config files
     f = os.path.join(out_folder, "args.txt")
@@ -247,6 +249,7 @@ if __name__ == "__main__":
     parser = config.config_parser()
     parser.add_argument("--run_val", action="store_true", help="run on val set")
     args = parser.parse_args()
+    print(args.run_val)
 
     if args.distributed:
         torch.cuda.set_device(args.local_rank)

@@ -42,6 +42,15 @@ def synchronize():
 
 
 def train(args):
+    nowtime = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    device = "cuda:{}".format(args.local_rank)
+    global_step = (args.ckpt_path.split("/")[-1]).split("_")[-1][:-4]
+    new_nowtime = nowtime +'_'+ global_step
+    out_folder = os.path.join(args.rootdir, "out", args.expname, new_nowtime)
+    # print("outputs will be saved to {}".format(out_folder))
+    # os.makedirs(out_folder, exist_ok=True)
+    args.new_nowtime = new_nowtime
+    args.out_folder = out_folder
 
     device = "cuda:{}".format(args.local_rank)
     out_folder = os.path.join(args.rootdir, "out", args.expname)

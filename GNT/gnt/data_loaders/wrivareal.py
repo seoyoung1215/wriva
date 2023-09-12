@@ -12,6 +12,7 @@ sys.path.append("../")
 from .data_utils import rectify_inplane_rotation, get_nearest_pose_ids
 from skimage.transform import resize
 from PIL import Image
+import datetime
 
 def qvec2rotmat(qvec):
     return np.array(
@@ -140,14 +141,27 @@ class WRIVARealDataset(Dataset):
         self.num_source_views = args.num_source_views
         self.testskip = args.testskip
         self.camera = args.camera
+        self.ckpt_path = args.ckpt_path
+        self.expname = args.expname
+        self.out_folder = args.out_folder
         # all_scenes = ["camA501-road-001/2023-03-14-11-36-34"]
         # all_scenes = ["camA003-ipad-vidoc-1/2022-09-28-15-38-05"]
         if self.mode=="train":
-            all_scenes=[os.path.join("camA008-iphone-vidoc-2", s) for s in os.listdir(os.path.join(self.folder_path,"camA008-iphone-vidoc-2"))]
+            # ## finetune on another scene
+            # all_scenes=[[os.path.join("camA008-iphone-vidoc-2", s) 
+            #             for s in os.listdir(os.path.join(self.folder_path,"camA008-iphone-vidoc-2"))][0]]
+            # ## finetune on more scenes
+            # all_scenes=[os.path.join("camA008-iphone-vidoc-2", s) for s in os.listdir(os.path.join(self.folder_path,"camA008-iphone-vidoc-2"))]
+            ## finetune on same scene: 7/8 training, 1/8 test (indexing done later. 여기선 사용할 데이터의 디렉토리 이름만 설정)
+            all_scenes = ["camA004-iphone-vidoc-1/2023-02-17-16-43-11"]
+            # ## gopro data
             # all_scenes=[os.path.join("camA022-gopro-2", s) for s in os.listdir(os.path.join(self.folder_path,"camA022-gopro-2"))]
         else:
-            all_scenes = ["camA004-iphone-vidoc-1/2023-02-17-16-43-11","camA004-iphone-vidoc-1/2023-02-17-16-47-36"]
-        print(all_scenes)
+            # all_scenes = ["camA004-iphone-vidoc-1/2023-02-17-16-43-11","camA004-iphone-vidoc-1/2023-02-17-16-47-36"]
+            all_scenes = ["camA004-iphone-vidoc-1/2023-02-17-16-43-11"]
+
+        print("mode: ", self.mode)
+        print("all_scenes: ", all_scenes)
         # import pdb; pdb.set_trace()
         self.given_scene = len(scenes) > 0
         if len(scenes) > 0:
@@ -180,7 +194,7 @@ class WRIVARealDataset(Dataset):
             self.scene_path = os.path.join(self.folder_path, scene)
             pose_files = [os.path.join(root, file) for root, dirs, files in os.walk(self.scene_path) for file in files if file.endswith('.json')]
             # print(self.scene_path, len(pose_files))
-            rgb_files, intrinsics, poses = read_cameras(pose_files, self.resize_factor )
+            rgb_files, intrinsics, poses = read_cameras(pose_files, self.resize_factor)
             i_all = np.arange(len(rgb_files))
             if self.mode != "train":
                 i_render = i_all[:: self.testskip]
@@ -281,25 +295,30 @@ class WRIVARealDataset(Dataset):
         src_rgbs = np.stack(src_rgbs, axis=0)
         src_cameras = np.stack(src_cameras, axis=0)
 
-        near_depth = 2.0
-        far_depth = 6.0
+        # near_depth = 2.0
+        # far_depth = 6.0
 
-        # near_depth = 0.1
-        # far_depth = 10.0
+        near_depth = 0.1
+        far_depth = 10.0
 
         depth_range = torch.tensor([near_depth, far_depth])
 
 
         ## need to comment below out for train (only use for test)
-        all_images = [rgb] + [src_rgbs[i] for i in range(10)]
-        concatenated_image = np.concatenate(all_images, axis=1)
-        tgt_src = Image.fromarray((concatenated_image * 255).astype(np.uint8))
-        width, height = tgt_src.size
-        new_width = int(width * 0.25)
-        new_height = int(height * 0.25)
-        tgt_src = tgt_src.resize((new_width, new_height))
-        name =rgb_file.split("/")[-1]
-        tgt_src.save(f"tgt_src/ipad_dist/{name}")
+        # all_images = [rgb] + [src_rgbs[i] for i in range(10)]
+        # concatenated_image = np.concatenate(all_images, axis=1)
+        # tgt_src = Image.fromarray((concatenated_image * 255).astype(np.uint8))
+        # width, height = tgt_src.size
+        # new_width = int(width * 0.25)
+        # new_height = int(height * 0.25)
+        # tgt_src = tgt_src.resize((new_width, new_height))
+        # name =rgb_file.split("/")[-1]
+        # save_dir = os.path.join(self.out_folder, "tgt_src")
+        # # print("tgt_src outputs will be saved to {}".format(save_dir))
+        # os.makedirs(save_dir, exist_ok=True)
+        # tgt_src.save(f"{save_dir}/{name}")
+        # # tgt_src.save(f"tgt_src/iphone_samescene/{name}")
+
 
         return {
             "rgb": torch.from_numpy(rgb[..., :3]),
