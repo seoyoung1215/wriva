@@ -207,15 +207,19 @@ class WRIVARealDataset(Dataset):
                 #     i_train = i_render = np.array([idx for idx in i_all if not idx in aa])
                 # else:
                 #     i_train = i_render = i_all
-            self.render_rgb_files.extend(np.array(rgb_files)[i_render].tolist())
-            self.render_intrinsics.extend([intrinsics_ for intrinsics_ in intrinsics[i_render]])
-            self.render_poses.extend([c2w_mat for c2w_mat in poses[i_render]])
-            num_render = len(i_render)
 
-            self.train_rgb_files.append(np.array(rgb_files)[i_train].tolist())
-            self.train_intrinsics.append(np.array(intrinsics)[i_train])
-            self.train_poses.append(np.array(poses)[i_train])
-            self.render_train_set_ids.extend([cntr] * num_render)
+            if "iphone" in scenes[0]:
+                aa
+            else:
+                self.render_rgb_files.extend(np.array(rgb_files)[i_render].tolist())
+                self.render_intrinsics.extend([intrinsics_ for intrinsics_ in intrinsics[i_render]])
+                self.render_poses.extend([c2w_mat for c2w_mat in poses[i_render]])
+                num_render = len(i_render)
+
+                self.train_rgb_files.append(np.array(rgb_files)[i_train].tolist())
+                self.train_intrinsics.append(np.array(intrinsics)[i_train])
+                self.train_poses.append(np.array(poses)[i_train])
+                self.render_train_set_ids.extend([cntr] * num_render)
             cntr += 1
         print(len(self.train_rgb_files))
         print("loading {} images for {}".format(len(self.render_rgb_files), mode))
@@ -295,29 +299,29 @@ class WRIVARealDataset(Dataset):
         src_rgbs = np.stack(src_rgbs, axis=0)
         src_cameras = np.stack(src_cameras, axis=0)
 
-        # near_depth = 2.0
-        # far_depth = 6.0
+        near_depth = 2.0
+        far_depth = 6.0
 
-        near_depth = 0.1
-        far_depth = 10.0
+        # near_depth = 0.1
+        # far_depth = 10.0
 
         depth_range = torch.tensor([near_depth, far_depth])
 
 
         ## need to comment below out for train (only use for test)
-        # all_images = [rgb] + [src_rgbs[i] for i in range(10)]
-        # concatenated_image = np.concatenate(all_images, axis=1)
-        # tgt_src = Image.fromarray((concatenated_image * 255).astype(np.uint8))
-        # width, height = tgt_src.size
-        # new_width = int(width * 0.25)
-        # new_height = int(height * 0.25)
-        # tgt_src = tgt_src.resize((new_width, new_height))
-        # name =rgb_file.split("/")[-1]
-        # save_dir = os.path.join(self.out_folder, "tgt_src")
-        # # print("tgt_src outputs will be saved to {}".format(save_dir))
-        # os.makedirs(save_dir, exist_ok=True)
-        # tgt_src.save(f"{save_dir}/{name}")
-        # # tgt_src.save(f"tgt_src/iphone_samescene/{name}")
+        all_images = [rgb] + [src_rgbs[i] for i in range(10)]
+        concatenated_image = np.concatenate(all_images, axis=1)
+        tgt_src = Image.fromarray((concatenated_image * 255).astype(np.uint8))
+        width, height = tgt_src.size
+        new_width = int(width * 0.25)
+        new_height = int(height * 0.25)
+        tgt_src = tgt_src.resize((new_width, new_height))
+        name =rgb_file.split("/")[-1]
+        save_dir = os.path.join(self.out_folder, "tgt_src")
+        # print("tgt_src outputs will be saved to {}".format(save_dir))
+        os.makedirs(save_dir, exist_ok=True)
+        tgt_src.save(f"{save_dir}/{name}")
+        # tgt_src.save(f"tgt_src/iphone_samescene/{name}")
 
 
         return {
